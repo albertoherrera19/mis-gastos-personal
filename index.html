@@ -122,6 +122,27 @@
   <div class="cd-list" id="cdList"></div>
 </div>
 
+<!-- Página completa para EDITAR un gasto -->
+<div class="cat-detail-page edit-page" id="editPage" aria-hidden="true" role="dialog">
+  <div class="cd-topbar">
+    <button class="cd-back" id="editBack" aria-label="Volver">←</button>
+    <div class="cd-title"><span class="edit-title">Editar gasto</span></div>
+  </div>
+  <div class="edit-card">
+    <div class="amount-row">
+      <span>S/</span>
+      <input type="number" id="editAmount" placeholder="0.00" inputmode="decimal" step="0.01">
+    </div>
+    <input type="text" id="editNote" placeholder="Nota (opcional)">
+    <label class="date-row">
+      <span class="date-label">📅 Fecha</span>
+      <input type="date" id="editDate" class="date-input">
+    </label>
+    <div class="cats" id="editCatGrid"></div>
+    <button class="save-btn" id="editSaveBtn">Guardar cambios</button>
+  </div>
+</div>
+
 <script src="app.js"></script>
 <script>
   if ('serviceWorker' in navigator) {

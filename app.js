@@ -681,6 +681,7 @@ function openCategoryDetail(catId){
         '<div class="cd-li-item" data-eid="' + it.id + '">' +
           '<span class="cd-li-note">' + note + '</span>' +
           '<span class="cd-li-iamt">S/ ' + fmt(it.amount) + '</span>' +
+          '<span class="cd-li-edit" data-eid="' + it.id + '" title="Editar">✏️</span>' +
         '</div>';
     });
 
@@ -712,6 +713,13 @@ function openCategoryDetail(catId){
     item.addEventListener('click', (ev)=>{
       ev.stopPropagation();
       jumpToExpense(item.getAttribute('data-eid'));
+    });
+  });
+  // Lápiz -> editar ese gasto (página completa).
+  cdListEl.querySelectorAll('.cd-li-edit').forEach(p=>{
+    p.addEventListener('click', (ev)=>{
+      ev.stopPropagation();
+      openEditExpense(p.getAttribute('data-eid'));
     });
   });
 
@@ -984,7 +992,7 @@ function txHtml(e){
   const cat = catById(e.category) || {icon:'🗂️', name:'Otros'};
   const d = new Date(e.date);
   const dateStr = d.toLocaleDateString('es-PE', {day:'2-digit', month:'short'});
-  return '<div class="tx" data-id="' + e.id + '"><div class="icon">' + cat.icon + '</div><div class="info"><div class="cat-name">' + cat.name + '</div>' + (e.note ? '<div class="note">' + e.note + '</div>' : '') + '</div><div class="right"><div class="amt">S/ ' + fmt(e.amount) + '</div><div class="date">' + dateStr + '</div></div><div class="del" data-id="' + e.id + '">✕</div></div>';
+  return '<div class="tx" data-id="' + e.id + '"><div class="icon">' + cat.icon + '</div><div class="info"><div class="cat-name">' + cat.name + '</div>' + (e.note ? '<div class="note">' + e.note + '</div>' : '') + '</div><div class="right"><div class="amt">S/ ' + fmt(e.amount) + '</div><div class="date">' + dateStr + '</div></div><div class="edit" data-id="' + e.id + '" title="Editar">✏️</div><div class="del" data-id="' + e.id + '" title="Borrar">✕</div></div>';
 }
 
 function renderFeed(){
@@ -1042,6 +1050,13 @@ function renderFeed(){
       renderAll();
     };
   });
+  // Editar (misma lógica en ambos modos).
+  feed.querySelectorAll('.edit').forEach(btn=>{
+    btn.onclick = (ev)=>{
+      ev.stopPropagation();
+      openEditExpense(btn.getAttribute('data-id'));
+    };
+  });
 }
 
 function setFeedSortMode(mode){
@@ -1083,6 +1098,82 @@ function jumpToExpense(id){
     }
   }, 80);
 }
+
+/* ---------- Editar un gasto existente (página completa) ---------- */
+let editingId = null;
+let editSelectedCat = null;
+
+function renderEditCats(){
+  const grid = document.getElementById('editCatGrid');
+  grid.innerHTML = '';
+  allCategories().forEach(cat=>{
+    const btn = document.createElement('div');
+    btn.className = 'cat-btn' + (editSelectedCat === cat.id ? ' selected' : '');
+    btn.innerHTML = '<span class="icon">' + cat.icon + '</span>' + cat.name;
+    btn.onclick = ()=>{ editSelectedCat = cat.id; renderEditCats(); validateEditForm(); };
+    grid.appendChild(btn);
+  });
+}
+
+function validateEditForm(){
+  const amount = parseFloat(document.getElementById('editAmount').value);
+  document.getElementById('editSaveBtn').disabled = !(amount > 0 && editSelectedCat);
+}
+
+function openEditExpense(id){
+  const e = expenses.find(x=>x.id === id);
+  if(!e) return;
+  editingId = id;
+  editSelectedCat = e.category;
+  document.getElementById('editAmount').value = e.amount;
+  document.getElementById('editNote').value = e.note || '';
+  const d = new Date(e.date);
+  const localISO = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+  const di = document.getElementById('editDate');
+  di.value = localISO;
+  di.max = new Date().toISOString().slice(0,10);
+  renderEditCats();
+  validateEditForm();
+  const page = document.getElementById('editPage');
+  page.classList.add('open');
+  page.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('cd-open');
+  page.scrollTop = 0;
+}
+
+function closeEditExpense(){
+  const page = document.getElementById('editPage');
+  page.classList.remove('open');
+  page.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('cd-open');
+  editingId = null;
+}
+
+function saveEditExpense(){
+  const amount = parseFloat(document.getElementById('editAmount').value);
+  if(!(amount > 0) || !editSelectedCat) return;
+  const e = expenses.find(x=>x.id === editingId);
+  if(!e){ closeEditExpense(); return; }
+  e.amount = amount;
+  e.note = document.getElementById('editNote').value.trim();
+  e.category = editSelectedCat;
+  const dv = document.getElementById('editDate').value;
+  if(dv){ const dd = new Date(dv + 'T12:00:00'); if(!isNaN(dd.getTime())) e.date = dd.toISOString(); }
+  saveExpenses();
+  // Si el detalle de categoría quedó abierto detrás, refrescarlo con los datos nuevos.
+  const catPageOpen = document.getElementById('catDetailPage').classList.contains('open');
+  const openCat = cdCatId;
+  closeEditExpense();
+  renderAll();
+  if(catPageOpen && openCat) openCategoryDetail(openCat);
+}
+
+document.getElementById('editBack').addEventListener('click', closeEditExpense);
+document.getElementById('editSaveBtn').addEventListener('click', saveEditExpense);
+document.getElementById('editAmount').addEventListener('input', validateEditForm);
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape' && document.getElementById('editPage').classList.contains('open')) closeEditExpense();
+});
 
 document.getElementById('amountInput').addEventListener('input', validateForm);
 
