@@ -27,7 +27,10 @@
       <div class="value">S/<span id="monthValue">0.00</span></div>
     </div>
   </div>
-  <div class="gear-btn" id="gearBtn">⚙️</div>
+  <div class="header-btns">
+    <div class="gear-btn" id="recurringBtn" title="Gastos recurrentes">🔁</div>
+    <div class="gear-btn" id="gearBtn">⚙️</div>
+  </div>
 </header>
 
 <div class="theme-drawer" id="themeDrawer">
@@ -185,6 +188,37 @@
     <div class="cats" id="groupCatGrid"></div>
     <button class="save-btn" id="groupSaveBtn">Guardar grupo</button>
     <button class="group-delete-btn" id="groupDeleteBtn" type="button">Eliminar grupo</button>
+  </div>
+</div>
+
+<!-- Página completa: GASTOS RECURRENTES -->
+<div class="cat-detail-page recurring-page" id="recurringPage" aria-hidden="true" role="dialog">
+  <div class="cd-topbar">
+    <button class="cd-back" id="recBack" aria-label="Volver">←</button>
+    <div class="cd-title"><span class="edit-title" id="recTitle">Gastos recurrentes</span></div>
+  </div>
+  <div class="edit-card">
+    <div id="recListWrap">
+      <div class="rec-hint">Suscripciones o servicios fijos (ej: Netflix). Marca "Pagado" cada mes cuando lo cubras; opcionalmente se registra como gasto real.</div>
+      <div class="rec-list" id="recurringList"></div>
+      <button class="save-btn rec-add-btn" id="recurringAddBtn" type="button">+ Nuevo recurrente</button>
+    </div>
+    <div id="recFormWrap" style="display:none">
+      <div class="amount-row">
+        <span>S/</span>
+        <input type="number" id="recAmount" placeholder="0.00" inputmode="decimal" step="0.01">
+      </div>
+      <input type="text" id="recName" placeholder="Nombre — ej: Netflix">
+      <label class="date-row">
+        <span class="date-label">📅 Día del mes</span>
+        <input type="number" id="recDay" min="1" max="31" placeholder="5" class="rec-day-input">
+      </label>
+      <div class="cg-cats-title">Categoría</div>
+      <div class="cats" id="recCatGrid"></div>
+      <button class="save-btn" id="recSaveBtn">Guardar</button>
+      <button class="group-delete-btn" id="recDeleteBtn" type="button">Eliminar</button>
+      <button class="group-delete-btn" id="recCancelBtn" type="button">Cancelar</button>
+    </div>
   </div>
 </div>
 

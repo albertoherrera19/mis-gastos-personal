@@ -40,6 +40,7 @@ const ACCENT_THEME_KEY = 'timeless_accent_theme';
 const CAT_COLOR_KEY = 'timeless_category_colors';
 const BUDGET_KEY = 'timeless_category_budgets';
 const GROUPS_KEY = 'timeless_cat_groups';
+const RECURRING_KEY = 'timeless_recurring';
 // En la app PERSONAL se pre-crean los grupos "Timeless" y "Personal".
 // (En el repo de amigos este flag va en false — diferencia intencional.)
 const PRECREATE_GROUPS = true;
@@ -123,7 +124,7 @@ document.getElementById('gearBtn').addEventListener('click', ()=>{
 // ---------- Respaldo de datos: exportar / importar ----------
 // Descarga/restaura gastos, categorías personalizadas y preferencias.
 // No incluye la cola de sincronización a Sheets (es solo un estado transitorio).
-const BACKUP_KEYS = [STORAGE_KEY, THEME_KEY, CUSTOM_CAT_KEY, ACCENT_THEME_KEY, CAT_COLOR_KEY, EYEBROW_KEY, BUDGET_KEY, GROUPS_KEY];
+const BACKUP_KEYS = [STORAGE_KEY, THEME_KEY, CUSTOM_CAT_KEY, ACCENT_THEME_KEY, CAT_COLOR_KEY, EYEBROW_KEY, BUDGET_KEY, GROUPS_KEY, RECURRING_KEY];
 
 function exportBackup(){
   const data = {};
@@ -1421,6 +1422,171 @@ document.getElementById('editSaveBtn').addEventListener('click', saveEditExpense
 document.getElementById('groupBack').addEventListener('click', closeGroupEditor);
 document.getElementById('groupSaveBtn').addEventListener('click', saveGroup);
 document.getElementById('groupDeleteBtn').addEventListener('click', deleteGroup);
+
+/* ---------- Gastos recurrentes (suscripciones/servicios fijos) ---------- */
+let recurring = [];        // [{id, name, amount, day, category, paid:{'YYYY-MM': expenseId|true}}]
+let recEditingId = null;
+let recSelCat = null;
+
+function loadRecurring(){
+  try{ recurring = JSON.parse(localStorage.getItem(RECURRING_KEY)) || []; }
+  catch(e){ recurring = []; }
+}
+function saveRecurring(){
+  try{ localStorage.setItem(RECURRING_KEY, JSON.stringify(recurring)); }catch(e){}
+}
+
+function openRecurringPage(){
+  showRecList();
+  renderRecurringList();
+  const page = document.getElementById('recurringPage');
+  page.classList.add('open');
+  page.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('cd-open');
+  page.scrollTop = 0;
+}
+function closeRecurringPage(){
+  const page = document.getElementById('recurringPage');
+  page.classList.remove('open');
+  page.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('cd-open');
+}
+function showRecList(){
+  document.getElementById('recListWrap').style.display = '';
+  document.getElementById('recFormWrap').style.display = 'none';
+  document.getElementById('recTitle').textContent = 'Gastos recurrentes';
+}
+
+function renderRecurringList(){
+  const box = document.getElementById('recurringList');
+  const mk = monthKey(new Date());
+  if(recurring.length === 0){
+    box.innerHTML = '<div class="empty">Aún no tienes recurrentes. Crea uno con el botón de abajo.</div>';
+    return;
+  }
+  box.innerHTML = recurring.map(r=>{
+    const cat = catById(r.category) || {icon:'🗂️', name:'Otros'};
+    const paid = !!r.paid[mk];
+    return '<div class="rec-item" data-id="' + r.id + '">' +
+             '<div class="rec-info"><div class="rec-name">' + cat.icon + ' ' + r.name + '</div>' +
+               '<div class="rec-meta">S/ ' + fmt(r.amount) + ' · día ' + r.day + ' · ' + cat.name + '</div></div>' +
+             '<div class="rec-actions">' +
+               '<span class="rec-edit" data-id="' + r.id + '" title="Editar">✏️</span>' +
+               '<button class="rec-toggle' + (paid ? ' paid' : '') + '" data-id="' + r.id + '" type="button">' + (paid ? '✓ Pagado' : 'Pendiente') + '</button>' +
+             '</div>' +
+           '</div>';
+  }).join('');
+  box.querySelectorAll('.rec-toggle').forEach(b=>{
+    b.addEventListener('click', ()=> toggleRecurringPaid(b.getAttribute('data-id')));
+  });
+  box.querySelectorAll('.rec-edit').forEach(b=>{
+    b.addEventListener('click', ()=> openRecForm(b.getAttribute('data-id')));
+  });
+}
+
+function renderRecCatGrid(){
+  const grid = document.getElementById('recCatGrid');
+  grid.innerHTML = '';
+  allCategories().forEach(cat=>{
+    const btn = document.createElement('div');
+    btn.className = 'cat-btn' + (recSelCat === cat.id ? ' selected' : '');
+    btn.innerHTML = '<span class="icon">' + cat.icon + '</span>' + cat.name;
+    btn.onclick = ()=>{ recSelCat = cat.id; renderRecCatGrid(); };
+    grid.appendChild(btn);
+  });
+}
+
+function openRecForm(id){
+  recEditingId = id;
+  const r = id ? recurring.find(x=>x.id === id) : null;
+  document.getElementById('recTitle').textContent = r ? 'Editar recurrente' : 'Nuevo recurrente';
+  document.getElementById('recName').value = r ? r.name : '';
+  document.getElementById('recAmount').value = r ? r.amount : '';
+  document.getElementById('recDay').value = r ? r.day : '';
+  recSelCat = r ? r.category : null;
+  renderRecCatGrid();
+  document.getElementById('recDeleteBtn').style.display = r ? '' : 'none';
+  document.getElementById('recListWrap').style.display = 'none';
+  document.getElementById('recFormWrap').style.display = '';
+}
+
+function saveRecItem(){
+  const name = document.getElementById('recName').value.trim();
+  const amount = parseFloat(document.getElementById('recAmount').value);
+  let day = parseInt(document.getElementById('recDay').value, 10);
+  if(!name || !(amount > 0) || !recSelCat){ alert('Completa nombre, monto y categoría.'); return; }
+  if(!(day >= 1 && day <= 31)) day = 1;
+  if(recEditingId){
+    const r = recurring.find(x=>x.id === recEditingId);
+    if(r){ r.name = name; r.amount = amount; r.day = day; r.category = recSelCat; }
+  } else {
+    recurring.push({id:'rec_' + Date.now(), name:name, amount:amount, day:day, category:recSelCat, paid:{}});
+  }
+  saveRecurring();
+  showRecList();
+  renderRecurringList();
+}
+
+function deleteRecItem(){
+  if(!recEditingId) return;
+  if(!window.confirm('¿Eliminar este recurrente? (no borra los gastos ya registrados)')) return;
+  recurring = recurring.filter(x=>x.id !== recEditingId);
+  saveRecurring();
+  showRecList();
+  renderRecurringList();
+}
+
+function toggleRecurringPaid(id){
+  const r = recurring.find(x=>x.id === id);
+  if(!r) return;
+  const mk = monthKey(new Date());
+  if(r.paid[mk]){
+    // Estaba pagado -> volver a pendiente. Si había gasto registrado, ofrecer quitarlo.
+    const linked = r.paid[mk];
+    delete r.paid[mk];
+    saveRecurring();
+    if(typeof linked === 'string'){
+      if(window.confirm('¿Quitar también el gasto que se había registrado en tus movimientos?')){
+        expenses = expenses.filter(e=>e.id !== linked);
+        saveExpenses();
+        renderAll();
+      }
+    }
+    renderRecurringList();
+  } else {
+    // Marcar pagado; ofrecer registrarlo como gasto real.
+    const cat = catById(r.category) || {name:'Otros'};
+    const registrar = window.confirm('Marcaste "' + r.name + '" como pagado este mes.\n\n¿Registrarlo también como gasto real de S/ ' + fmt(r.amount) + ' en ' + cat.name + '?');
+    if(registrar){
+      const now = new Date();
+      const dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const day = Math.min(r.day, dim);
+      const gasto = {
+        id: Date.now().toString(),
+        amount: r.amount,
+        category: r.category,
+        note: r.name,
+        date: new Date(now.getFullYear(), now.getMonth(), day, 12, 0, 0).toISOString()
+      };
+      expenses.push(gasto);
+      saveExpenses();
+      if(typeof queueForSheets === 'function') queueForSheets(gasto); // personal: sincroniza a Sheets
+      r.paid[mk] = gasto.id;
+      renderAll();
+    } else {
+      r.paid[mk] = true; // pagado sin registrar gasto
+    }
+    saveRecurring();
+    renderRecurringList();
+  }
+}
+
+document.getElementById('recurringBtn').addEventListener('click', openRecurringPage);
+document.getElementById('recBack').addEventListener('click', closeRecurringPage);
+document.getElementById('recurringAddBtn').addEventListener('click', ()=> openRecForm(null));
+document.getElementById('recSaveBtn').addEventListener('click', saveRecItem);
+document.getElementById('recDeleteBtn').addEventListener('click', deleteRecItem);
+document.getElementById('recCancelBtn').addEventListener('click', ()=>{ showRecList(); renderRecurringList(); });
 document.getElementById('editAmount').addEventListener('input', validateEditForm);
 document.addEventListener('keydown', (e)=>{
   if(e.key === 'Escape' && document.getElementById('editPage').classList.contains('open')) closeEditExpense();
@@ -1481,6 +1647,7 @@ loadCustomCategories();
 loadCategoryColors();
 loadCategoryBudgets();
 loadCatGroups();
+loadRecurring();
 renderCats();
 loadExpenses();
 flushSheetsQueue(); // reintenta envíos a Sheets que quedaron pendientes
