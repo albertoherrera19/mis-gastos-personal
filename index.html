@@ -142,6 +142,14 @@
             }
           });
         });
+        // En apps instaladas (iOS/Android), reabrir el ícono no siempre dispara
+        // 'load' de nuevo (el sistema puede solo "reactivar" la app en memoria).
+        // Por eso también revisamos actualizaciones cada vez que la app vuelve
+        // a primer plano, para no quedar pegados en una versión vieja.
+        document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState === 'visible') reg.update();
+        });
+        window.addEventListener('pageshow', function () { reg.update(); });
       }).catch(function (err) {
         console.log('SW no registrado:', err);
       });
