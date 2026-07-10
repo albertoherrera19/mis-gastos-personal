@@ -1192,6 +1192,7 @@ function renderMonths(){
 // Siempre inicia en 'default' al abrir la app (no se persiste).
 let feedSortMode = 'default';
 const feedOpenGroups = new Set(); // grupos expandidos en el modo por categoría
+let feedSearch = {text:'', min:null, max:null, from:'', to:''}; // filtros del buscador
 
 // Markup de una transacción del feed (compartido por ambos modos).
 function txHtml(e){
@@ -1199,6 +1200,24 @@ function txHtml(e){
   const d = new Date(e.date);
   const dateStr = d.toLocaleDateString('es-PE', {day:'2-digit', month:'short'});
   return '<div class="tx" data-id="' + e.id + '"><div class="icon">' + cat.icon + '</div><div class="info"><div class="cat-name">' + cat.name + '</div>' + (e.note ? '<div class="note">' + e.note + '</div>' : '') + '</div><div class="right"><div class="amt">S/ ' + fmt(e.amount) + '</div><div class="date">' + dateStr + '</div></div><div class="edit" data-id="' + e.id + '" title="Editar">✏️</div><div class="del" data-id="' + e.id + '" title="Borrar">✕</div></div>';
+}
+
+// Filtra el feed según el buscador (nota/categoría, rango de monto, rango de fechas).
+function filterFeedExpenses(list){
+  const f = feedSearch;
+  const text = (f.text || '').trim().toLowerCase();
+  return list.filter(e=>{
+    if(text){
+      const note = (e.note || '').toLowerCase();
+      const catName = ((catById(e.category) || {name:''}).name || '').toLowerCase();
+      if(note.indexOf(text) === -1 && catName.indexOf(text) === -1) return false;
+    }
+    if(f.min != null && e.amount < f.min) return false;
+    if(f.max != null && e.amount > f.max) return false;
+    if(f.from && new Date(e.date) < new Date(f.from + 'T00:00:00')) return false;
+    if(f.to && new Date(e.date) > new Date(f.to + 'T23:59:59')) return false;
+    return true;
+  });
 }
 
 function renderFeed(){
@@ -1209,9 +1228,15 @@ function renderFeed(){
     return;
   }
 
+  const base = filterFeedExpenses(expenses);
+  if(base.length === 0){
+    feed.innerHTML = '<div class="empty">Ningún movimiento coincide con la búsqueda.</div>';
+    return;
+  }
+
   if(feedSortMode === 'category'){
-    // Agrupar por categoría (TODOS los gastos, sin límite), expandibles.
-    const sorted = [...expenses].sort((a,b)=> new Date(b.date) - new Date(a.date));
+    // Agrupar por categoría (TODOS los gastos filtrados, sin límite), expandibles.
+    const sorted = [...base].sort((a,b)=> new Date(b.date) - new Date(a.date));
     const groups = {};
     sorted.forEach(e=>{ (groups[e.category] = groups[e.category] || []).push(e); });
     const orderedIds = allCategories().map(c=>c.id).filter(id=>groups[id]);
@@ -1242,7 +1267,7 @@ function renderFeed(){
     });
   } else {
     // Predeterminado: orden de inserción real (lo último agregado, arriba), sin límite.
-    const ordered = [...expenses].reverse();
+    const ordered = [...base].reverse();
     feed.innerHTML = ordered.map(txHtml).join('');
   }
 
@@ -1285,6 +1310,23 @@ document.querySelectorAll('#feedSortMenu .fs-opt').forEach(opt=>{
 });
 document.addEventListener('click', (e)=>{
   if(!e.target.closest('.feed-sort')) document.getElementById('feedSortMenu').classList.remove('open');
+});
+
+// Buscador y filtros de Movimientos.
+document.getElementById('feedSearchText').addEventListener('input', (e)=>{ feedSearch.text = e.target.value; renderFeed(); });
+document.getElementById('ffMin').addEventListener('input', (e)=>{ feedSearch.min = e.target.value !== '' ? parseFloat(e.target.value) : null; renderFeed(); });
+document.getElementById('ffMax').addEventListener('input', (e)=>{ feedSearch.max = e.target.value !== '' ? parseFloat(e.target.value) : null; renderFeed(); });
+document.getElementById('ffFrom').addEventListener('input', (e)=>{ feedSearch.from = e.target.value; renderFeed(); });
+document.getElementById('ffTo').addEventListener('input', (e)=>{ feedSearch.to = e.target.value; renderFeed(); });
+document.getElementById('feedFilterToggle').addEventListener('click', ()=>{
+  const open = document.getElementById('feedFilters').classList.toggle('open');
+  document.getElementById('feedFilterToggle').classList.toggle('active', open);
+});
+document.getElementById('ffClear').addEventListener('click', ()=>{
+  feedSearch = {text:'', min:null, max:null, from:'', to:''};
+  document.getElementById('feedSearchText').value = '';
+  ['ffMin','ffMax','ffFrom','ffTo'].forEach(id=>{ document.getElementById(id).value = ''; });
+  renderFeed();
 });
 
 // Salta desde un gasto individual (detalle de categoría) hasta esa

@@ -1041,6 +1041,78 @@ body.cd-open{overflow:hidden;}
 }
 .fs-opt.active{color:var(--bone);background:var(--chip);}
 
+/* ---- Buscador y filtros de movimientos ---- */
+.feed-search{
+  display:flex;
+  gap:8px;
+  margin:0 20px 8px;
+}
+.feed-search input{
+  flex:1;
+  min-width:0;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:8px;
+  color:var(--bone);
+  font-size:13px;
+  padding:9px 12px;
+  outline:none;
+}
+.feed-search input::placeholder{color:var(--muted);}
+.feed-filter-toggle{
+  flex-shrink:0;
+  background:var(--chip);
+  border:1px solid var(--line);
+  color:var(--muted);
+  font-size:11px;
+  font-weight:700;
+  padding:0 12px;
+  border-radius:8px;
+  cursor:pointer;
+}
+.feed-filter-toggle.active{color:var(--bone);border-color:var(--accent);}
+.feed-filters{
+  display:none;
+  margin:0 20px 10px;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:12px;
+}
+.feed-filters.open{display:block;}
+.feed-filters .ff-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:10px;
+}
+.feed-filters .ff-lbl{font-size:12px;color:var(--muted);width:64px;flex-shrink:0;}
+.feed-filters .ff-sep{color:var(--muted);}
+.feed-filters input{
+  flex:1;
+  min-width:0;
+  background:var(--chip);
+  border:1px solid var(--line);
+  border-radius:8px;
+  color:var(--bone);
+  font-size:13px;
+  font-family:inherit;
+  padding:8px 10px;
+  outline:none;
+}
+.feed-filters input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.7);}
+.ff-clear{
+  width:100%;
+  background:none;
+  border:1px solid var(--line);
+  color:var(--muted);
+  border-radius:8px;
+  padding:9px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+
 /* ---- Feed agrupado por categoría ---- */
 .feed-group{
   background:var(--card);

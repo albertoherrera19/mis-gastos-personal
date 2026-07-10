@@ -102,6 +102,25 @@
     </div>
   </span>
 </div>
+<div class="feed-search">
+  <input type="text" id="feedSearchText" placeholder="🔍 Buscar por nota...">
+  <button class="feed-filter-toggle" id="feedFilterToggle" type="button">Filtros ▾</button>
+</div>
+<div class="feed-filters" id="feedFilters">
+  <div class="ff-row">
+    <span class="ff-lbl">Monto S/</span>
+    <input type="number" id="ffMin" placeholder="mín" inputmode="decimal" step="0.01">
+    <span class="ff-sep">–</span>
+    <input type="number" id="ffMax" placeholder="máx" inputmode="decimal" step="0.01">
+  </div>
+  <div class="ff-row">
+    <span class="ff-lbl">Fecha</span>
+    <input type="date" id="ffFrom" class="date-input">
+    <span class="ff-sep">–</span>
+    <input type="date" id="ffTo" class="date-input">
+  </div>
+  <button class="ff-clear" id="ffClear" type="button">Limpiar filtros</button>
+</div>
 <div class="feed" id="feed"></div>
 
 <!-- Detalle diario por categoría (página completa) -->
