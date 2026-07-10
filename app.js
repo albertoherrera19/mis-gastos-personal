@@ -947,15 +947,15 @@ function txHtml(e){
 
 function renderFeed(){
   const feed = document.getElementById('feed');
-  const sorted = [...expenses].sort((a,b)=> new Date(b.date) - new Date(a.date)).slice(0,30);
 
-  if(sorted.length===0){
+  if(expenses.length === 0){
     feed.innerHTML = '<div class="empty">Agrega tu primer gasto arriba 👆</div>';
     return;
   }
 
   if(feedSortMode === 'category'){
-    // Agrupar por categoría (en el orden de las categorías), expandibles.
+    // Agrupar por categoría (TODOS los gastos, sin límite), expandibles.
+    const sorted = [...expenses].sort((a,b)=> new Date(b.date) - new Date(a.date));
     const groups = {};
     sorted.forEach(e=>{ (groups[e.category] = groups[e.category] || []).push(e); });
     const orderedIds = allCategories().map(c=>c.id).filter(id=>groups[id]);
@@ -985,7 +985,9 @@ function renderFeed(){
       });
     });
   } else {
-    feed.innerHTML = sorted.map(txHtml).join('');
+    // Predeterminado: orden de inserción real (lo último agregado, arriba), sin límite.
+    const ordered = [...expenses].reverse();
+    feed.innerHTML = ordered.map(txHtml).join('');
   }
 
   // Borrado (misma lógica en ambos modos).
