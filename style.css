@@ -65,6 +65,26 @@ h1{
 /* Escala para montos grandes sin desbordar */
 .month-total .value.compact{font-size:28px;}
 .month-total .value.mini{font-size:23px;}
+.mt-row{display:flex;align-items:center;gap:10px;}
+.mt-budget-btn{
+  background:var(--chip);
+  border:1px solid var(--line);
+  width:32px;height:32px;
+  border-radius:9px;
+  cursor:pointer;
+  font-size:15px;
+  flex-shrink:0;
+}
+.mt-budget-panel{
+  display:none;
+  margin-top:10px;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px;
+  max-width:340px;
+}
+.mt-budget-panel.open{display:block;}
 
 .gear-btn{
   background:var(--chip);
@@ -439,6 +459,16 @@ input[type="text"]::placeholder{color:var(--muted);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.ok{border-color:#4ade80;}
 .toast.err{border-color:#e8442c;}
+.rec-subtabs{display:flex;gap:8px;margin-bottom:16px;}
+.rem-pending-banner{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--accent-dim);border:1px solid var(--accent);border-radius:12px;
+  padding:10px 12px;margin-bottom:14px;font-size:12px;font-weight:700;color:var(--bone);
+}
+.rem-pending-banner button{
+  background:none;border:none;color:var(--bone);text-decoration:underline;
+  font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;
+}
 .rec-hint{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:14px;}
 .rec-add-btn{margin-top:4px;}
 .rec-day-input{
@@ -795,12 +825,18 @@ body.cd-open{overflow:hidden;}
 }
 
 .cd-list-title{
-  margin:22px 0 6px;
   font-size:11px;
   text-transform:uppercase;
   letter-spacing:.12em;
   color:var(--accent);
   font-weight:700;
+}
+.cd-list-title-row{
+  margin:22px 0 6px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:relative;
 }
 .cd-list{
   border-top:1px dashed var(--line);

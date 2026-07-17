@@ -4,24 +4,25 @@
 > en `CLAUDE.md` — léelo primero.
 
 ## Punto de sincronización entre los dos repos
-Ambos repos están a la par hasta el commit **"Feature #4: presupuesto mensual..."**
-(personal `900a642` = amigos `c91ebef`). Todo lo commiteado DESPUÉS de ese punto existe
-**solo en el repo personal** (carpeta `mis-gastos-personal`), pendiente de portar a amigos cuando el
-usuario lo pida:
+**Sincronizado el 2026-07-12** (commit amigos `65c7596`). Se portaron a `mis-gastos`
+(carpeta `mis-gastos-timeless`) las 4 funcionalidades pendientes desde `900a642`/`c91ebef`:
 
-- `d3bc281` — Feature #1: grupos personalizados de categorías (pre-crea Timeless/Personal en personal).
+- `d3bc281` — Feature #1: grupos personalizados de categorías (en amigos, `catGroups` empieza **vacío**;
+  NO se pre-crean Timeless/Personal — eso sigue siendo exclusivo del repo personal).
 - `94133f3` — Feature #5: buscador y filtros en Movimientos.
 - `323733d` — Feature #7: gastos recurrentes.
-- `300eccb` — Lote de 8 ajustes: orden por fecha + "Más antiguo", confirmar borrado, botón 💾 guardar a
-  Sheets con toast, engranaje coloreado en detalle, scroll al primer día con gasto, 3 colores nuevos
-  (Amarillo/Gris/Azul Marino), etiqueta de grupo por gasto individual, barra de grupos reubicada al header.
-- `daa3989` — Íconos nuevos de la PWA (carpeta `icons/`, manifest y favicons actualizados). **Este es
-  solo un asset del repo personal** — el repo de amigos sigue con sus íconos viejos en la raíz
-  (`icon-192.png`/`icon-512.png`), intacto, porque nunca se pidió cambiarlos ahí.
+- `300eccb` — Lote de 8 ajustes, **excepto** el punto #3 (botón 💾 Sheets + toast, que no aplica sin
+  Sheets): orden por fecha + "Más antiguo", confirmar borrado, engranaje coloreado en detalle, scroll al
+  primer día con gasto, 3 colores nuevos (Amarillo/Gris/Azul Marino), etiqueta de grupo por gasto
+  individual, barra de grupos reubicada al header.
 
-Al sincronizar: portar los primeros 4 puntos completos; del último (`300eccb`) todo aplica igual excepto
-que en amigos **no** se debe pre-crear "Timeless"/"Personal" (dejar `catGroups` vacío al inicio). Los
-íconos (`daa3989`) NO se mencionaron para amigos — no portarlos salvo que el usuario lo pida.
+Quedaron intencionalmente FUERA del repo de amigos (como siempre): la integración con Google Sheets
+completa (constantes, funciones, botón, toast), la pre-creación de grupos, y los íconos nuevos
+(`daa3989`/`e43c3f0`, exclusivos del repo personal, nunca pedidos para amigos). Verificado en navegador
+sin errores de consola antes del push (cache del service worker de amigos subida a `v20`).
+
+Todo cambio FUTURO en el repo personal (después de este punto) vuelve a quedar pendiente de portar a
+amigos hasta el próximo pedido explícito de sincronización.
 
 ## ✅ Funcionalidades implementadas y funcionando (repo personal, verificadas en navegador)
 - Registro de gastos: monto, nota, categoría, **fecha manual opcional** (por defecto hoy, no permite
