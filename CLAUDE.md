@@ -10,17 +10,22 @@ step: `index.html` + `style.css` + `app.js` + `manifest.json` + `service-worker.
 | **MI repo (personal)** | `mis-gastos-personal` | `mis-gastos-timeless` | https://albertoherrera19.github.io/mis-gastos-timeless/ | ✅ Sí |
 | **Repo de amigos** | `mis-gastos-timeless` | `mis-gastos` | https://albertoherrera19.github.io/mis-gastos/ | ❌ No, nunca |
 
-- **Todo cambio nuevo se implementa primero en el repo personal** (carpeta `mis-gastos-personal`),
-  probado en navegador y commiteado/pusheado ahí.
-- **Desde 2026-07-17, sincronizar al repo de amigos es automático — ya NO hace falta que el usuario lo
-  pida cada vez.** Después de cerrar un cambio en personal, portarlo también a amigos en el mismo turno
-  (mismo flujo de siempre: comparar con `git diff`/`git log` qué cambió desde el último punto en común,
-  portar SOLO esas diferencias con `git merge-file` de 3 vías, probar en navegador, commitear y pushear),
-  salvo que el usuario diga explícitamente que NO lo haga esta vez.
-- Al sincronizar, portar SOLO las diferencias reales (no reimplementar desde cero), y **nunca copiar**:
+- **Todo cambio se implementa SOLO en el repo personal** (carpeta `mis-gastos-personal`), probado en
+  navegador y commiteado/pusheado ahí. **No tocar el repo de amigos** (ni `git add/commit/push` ahí) hasta
+  que el usuario lo pida explícitamente con algo como "sincroniza los cambios pendientes al repo de
+  amigos" — no asumir que un cambio debe sincronizarse solo porque se hizo en personal (confirmado
+  2026-07-17: el usuario NO quiere sync automático, para ahorrar tokens y porque las diferencias
+  intencionales entre ambos repos son parte del diseño, no algo a resolver).
+- Al sincronizar (solo cuando se pida): comparar con `git diff`/`git log` qué cambió en personal desde
+  el último punto en común, portar SOLO esas diferencias (no reimplementar desde cero) — usar
+  `git merge-file` de 3 vías (base=commit del último sync, ours=archivo actual de amigos, theirs=HEAD de
+  personal) por archivo, que reconcilia solo, probar en navegador, commitear y pushear. El usuario NO
+  quiere tener que recordar la lista de exclusiones cada vez; mantenerla aplicada sin que la repita:
   - la integración con Google Sheets (constantes `SHEETS_*`, `queueForSheets`, `google-apps-script.gs`),
   - la pre-creación de grupos "Timeless"/"Personal" (`PRECREATE_GROUPS = true` es exclusivo del personal;
-    en amigos ese flag debe ir en `false` y los grupos empiezan vacíos).
+    en amigos ese flag debe ir en `false` y los grupos empiezan vacíos, sin pestañas "Timeless"/"Personal").
+  - los íconos de la PWA fueron una EXCEPCIÓN puntual sincronizada el 2026-07-17 a pedido explícito; salvo
+    que se repita el pedido, no asumir que se sincronizan de nuevo automáticamente en el futuro.
 - Ambos usan **rutas relativas** en todo el HTML/CSS/JS (`href="style.css"`, no `/style.css`) porque se
   sirven en un subpath de GitHub Pages, no en la raíz del dominio. Nunca usar rutas absolutas `/algo`.
 
@@ -80,9 +85,8 @@ step: `index.html` + `style.css` + `app.js` + `manifest.json` + `service-worker.
    lo pide — se validó hasta 1000 gastos con sumas exactas).
 4. Subir versión de caché del service worker en cada cambio y verificar el deploy en vivo antes de
    reportar éxito.
-5. Nunca usar `git push --force`. Nunca commitear en el repo personal si no se pidió. El repo de amigos
-   SÍ se sincroniza automáticamente tras cada cambio en personal (ver sección de arquitectura arriba),
-   sin necesidad de pedirlo cada vez — salvo que el usuario diga explícitamente que no lo haga esa vez.
+5. Nunca usar `git push --force`, nunca tocar el repo de amigos sin permiso explícito, nunca commitear
+   si no se pidió.
 6. iOS cachea agresivamente las PWA instaladas — el `index.html` ya tiene lógica de auto-actualización
    (`visibilitychange`/`pageshow` disparan `reg.update()`), pero aun así a veces un ícono instalado queda
    "pegado" en una versión vieja; la solución sin riesgo de perder datos es abrir la URL en Safari normal
